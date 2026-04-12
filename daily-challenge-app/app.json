@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Ochex_LJ",
-    "slug": "Ochex_LJ",
+    "name": "Ochex Daily Challenge App",
+    "slug": "Ochex_Daily_Challenge",
     "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "ochexlj",
+    "scheme": "ochexdailychallenge",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -20,8 +20,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.ochex.Ochex_LJ",
-      "versionCode": 3
+      "package": "com.ochex.ochex_daily_challenge",
+      "versionCode": 1
     },
     "web": {
       "output": "static",
