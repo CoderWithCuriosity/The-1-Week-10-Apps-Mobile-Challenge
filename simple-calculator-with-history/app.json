@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Ochex Simple Calculator",
-    "slug": "Ochex_simple_habit_tracker",
+    "slug": "ochex_simple_calculator_with_history",
     "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

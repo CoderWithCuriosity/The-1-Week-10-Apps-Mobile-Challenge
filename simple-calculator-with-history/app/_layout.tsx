@@ -1,73 +1,111 @@
-import { Stack } from "expo-router";
+import { Stack, usePathname, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { StyleSheet, View, Text } from "react-native";
-import { usePathname } from "expo-router";
+import { CalculatorProvider } from "../hooks/useCalculator";
+import { theme } from "../theme/theme";
 
-function AppHeader() {
+function CustomHeader() {
   const pathname = usePathname();
+  const router = useRouter();
 
-  const titles: Record<string, string> = {
-    "/": "OCHEX LEARN JAVASCRIPT",
-    "/levels": "Learning Levels",
+  const getHeaderTitle = () => {
+    if (pathname === "/") return "Calculator";
+    if (pathname === "/history") return "History";
+    if (pathname.includes("/calculation/")) return "Calculation Details";
+    return "Calculator";
   };
 
-  // Fallback for dynamic routes
-  let title = titles[pathname] ?? "OCHEX";
-
-  if (pathname.startsWith("/levels/")) title = "Level Details";
-  if (pathname.startsWith("/lesson/")) title = "Lesson";
-  if (pathname.startsWith("/quiz/")) title = "Quiz";
+  const title = getHeaderTitle();
+  const showBackButton = pathname.includes("/calculation/");
 
   return (
     <View style={styles.header}>
-      <Text style={styles.headerTitle}>{title}</Text>
+      <View style={styles.headerContent}>
+        {showBackButton && (
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+        )}
+        <Text style={[styles.headerTitle, showBackButton && styles.headerTitleWithBack]}>
+          {title}
+        </Text>
+        <View style={styles.headerRight} />
+      </View>
     </View>
   );
 }
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar style="light" />
-
-        {/* Custom Header */}
-        <AppHeader />
-        
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: {
-              backgroundColor: "#F8F9FA",
-            },
-          }}
-        >
-          <Stack.Screen name="index" />
-          
-        </Stack>
-      </SafeAreaView>
-    </SafeAreaProvider>
+    <CalculatorProvider>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.safeArea}>
+          <StatusBar style="dark" backgroundColor={theme.colors.neutrals.white} />
+          <CustomHeader />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: {
+                backgroundColor: theme.colors.neutrals.gray50,
+              },
+            }}
+          >
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="calculation/[id]" />
+          </Stack>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </CalculatorProvider>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F8F9FA",
+    backgroundColor: theme.colors.neutrals.white,
   },
-
   header: {
-    height: 60,
-    backgroundColor: "#4A6FA5",
-    justifyContent: "flex-end",
-    paddingBottom: 16,
-    paddingHorizontal: 20,
+    backgroundColor: theme.colors.neutrals.white,
+    paddingTop: 8,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.neutrals.gray200,
   },
-
+  headerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: theme.spacing.scales.md,
+    height: 44,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  backIcon: {
+    fontSize: 28,
+    color: theme.colors.neutrals.gray900,
+    fontWeight: "600",
+  },
   headerTitle: {
-    color: "#fff",
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: "600",
+    color: theme.colors.neutrals.gray900,
+    letterSpacing: 0.5,
+  },
+  headerTitleWithBack: {
+    flex: 1,
+    textAlign: "center",
+    marginLeft: -40,
+  },
+  headerRight: {
+    width: 40,
   },
 });
