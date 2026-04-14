@@ -171,6 +171,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borders.radius.md,
     borderWidth: 1,
     borderColor: theme.colors.neutrals.gray200,
+    marginBottom: 18
   },
   difficultyFilter: {
     paddingHorizontal: theme.spacing.scales.md,

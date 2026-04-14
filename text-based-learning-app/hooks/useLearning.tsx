@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useCallback, useEffect, useState } from "react";
-import { Lesson, StudyProgress, lessonsData } from "../data/lessons";
+import { Lesson, StudyProgress, lessonsData, categories, difficulties } from "../data/lessons";
 
 const LESSONS_KEY = "@learning:lessons";
 const PROGRESS_KEY = "@learning:progress";
@@ -127,7 +127,7 @@ export function LearningProvider({ children }: { children: React.ReactNode }) {
     
     setProgress(prev => {
       const existingIndex = prev.findIndex(p => p.lessonId === id);
-      let updated;
+      let updated: StudyProgress[];
       
       if (existingIndex >= 0) {
         updated = prev.map(p =>

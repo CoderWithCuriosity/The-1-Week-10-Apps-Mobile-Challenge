@@ -1,3 +1,4 @@
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Plus } from "lucide-react-native";
 import React, { useState } from "react";
 import {
@@ -15,7 +16,9 @@ import { useTimer } from "../../hooks/useTimer";
 import { theme } from "../../theme/theme";
 
 export default function PresetsScreen() {
-  const { presets, addPreset, deletePreset, updatePreset } = useTimer();
+  const router = useRouter();
+  const { select } = useLocalSearchParams<{ select?: string }>();
+  const { presets, addPreset, deletePreset, updatePreset, setSelectedPresetId } = useTimer();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingPreset, setEditingPreset] = useState<any>(null);
   const [name, setName] = useState("");
@@ -23,6 +26,14 @@ export default function PresetsScreen() {
   const [breakDuration, setBreakDuration] = useState("5");
   const [longBreakDuration, setLongBreakDuration] = useState("");
   const [sessionsBeforeLongBreak, setSessionsBeforeLongBreak] = useState("");
+
+  const handleSelectPreset = async (presetId: number) => {
+    await setSelectedPresetId(presetId);
+    if (select === "true") {
+      // If we're in selection mode, go back to timer
+      router.back();
+    }
+  };
 
   const handleAddPreset = () => {
     setEditingPreset(null);
@@ -110,7 +121,7 @@ export default function PresetsScreen() {
           <PresetCard
             key={preset.id}
             preset={preset}
-            onSelect={() => {}}
+            onSelect={() => handleSelectPreset(preset.id)}
             onEdit={() => handleEditPreset(preset)}
             onDelete={() => handleDelete(preset.id, preset.name)}
           />

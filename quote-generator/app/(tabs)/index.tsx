@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { RefreshCw } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   RefreshControl,
   ScrollView,
@@ -8,25 +8,36 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 import CategoryFilter from "../../components/CategoryFilter";
 import QuoteCard from "../../components/QuoteCard";
-import ShareButton from "../../components/ShareButton";
 import { useQuotes } from "../../hooks/useQuotes";
 import { theme } from "../../theme/theme";
 
 export default function DiscoverScreen() {
   const router = useRouter();
-  const { getRandomQuote, toggleFavorite, getDailyQuote, getQuotesByCategory } = useQuotes();
+  const { getRandomQuote, toggleFavorite, getDailyQuote, getQuotesByCategory, loading } = useQuotes();
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [currentQuote, setCurrentQuote] = useState(getRandomQuote());
+  const [currentQuote, setCurrentQuote] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Initialize quotes after loading
+  useEffect(() => {
+    if (!loading) {
+      const randomQuote = getRandomQuote();
+      setCurrentQuote(randomQuote);
+    }
+  }, [loading]);
   
   const dailyQuote = getDailyQuote();
   const categoryQuotes = getQuotesByCategory(selectedCategory);
 
   const getNewRandomQuote = () => {
-    setCurrentQuote(getRandomQuote(selectedCategory === "all" ? undefined : selectedCategory));
+    const newQuote = getRandomQuote(selectedCategory === "all" ? undefined : selectedCategory);
+    if (newQuote) {
+      setCurrentQuote(newQuote);
+    }
   };
 
   const onRefresh = React.useCallback(() => {
@@ -37,8 +48,30 @@ export default function DiscoverScreen() {
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
-    setCurrentQuote(getRandomQuote(category === "all" ? undefined : category));
+    const newQuote = getRandomQuote(category === "all" ? undefined : category);
+    if (newQuote) {
+      setCurrentQuote(newQuote);
+    }
   };
+
+  // Show loading indicator while quotes are loading
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.brand.primary} />
+        <Text style={styles.loadingText}>Loading quotes...</Text>
+      </View>
+    );
+  }
+
+  // Handle case when no quotes are available
+  if (!dailyQuote || !currentQuote) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.errorText}>No quotes available</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -67,11 +100,13 @@ export default function DiscoverScreen() {
           onSelectCategory={handleCategoryChange}
         />
         
-        <QuoteCard
-          quote={currentQuote}
-          onToggleFavorite={() => toggleFavorite(currentQuote.id)}
-          onPress={() => router.push(`/quote/${currentQuote.id}`)}
-        />
+        {currentQuote && (
+          <QuoteCard
+            quote={currentQuote}
+            onToggleFavorite={() => toggleFavorite(currentQuote.id)}
+            onPress={() => router.push(`/quote/${currentQuote.id}`)}
+          />
+        )}
         
         <TouchableOpacity
           style={styles.refreshButton}
@@ -154,5 +189,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.brand.primary,
     fontWeight: "500",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: theme.colors.neutrals.gray50,
+  },
+  loadingText: {
+    marginTop: theme.spacing.scales.md,
+    fontSize: 16,
+    color: theme.colors.neutrals.gray600,
+  },
+  errorText: {
+    fontSize: 16,
+    color: theme.colors.feedback.error,
   },
 });

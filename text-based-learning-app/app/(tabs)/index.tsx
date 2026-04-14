@@ -72,7 +72,7 @@ export default function DashboardScreen() {
         </View>
         
         <View style={styles.statCard}>
-          <TrendingUp size={24} color={theme.colors.info} />
+          <TrendingUp size={24} color={theme.colors.feedback.info} />
           <Text style={styles.statValue}>{stats.masteryAverage}%</Text>
           <Text style={styles.statLabel}>Avg Mastery</Text>
         </View>
@@ -88,24 +88,25 @@ export default function DashboardScreen() {
           />
         </View>
       </View>
+
+    {inProgressLessons.map((lesson) => {
+      const lessonProgress = progress.find(p => p.lessonId === lesson.id);
+      // Map the progress to the expected shape for LessonCard
+      const mappedProgress = lessonProgress ? {
+        studyCount: lessonProgress.studyCount,
+        masteryLevel: lessonProgress.masteryLevel
+      } : undefined;
       
-      {inProgressLessons.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Continue Learning</Text>
-          {inProgressLessons.map((lesson) => {
-            const lessonProgress = progress.find(p => p.lessonId === lesson.id);
-            return (
-              <LessonCard
-                key={lesson.id}
-                lesson={lesson}
-                onPress={() => router.push(`/lesson/${lesson.id}`)}
-                onStudy={() => router.push(`/lesson/${lesson.id}`)}
-                progress={lessonProgress}
-              />
-            );
-          })}
-        </View>
-      )}
+      return (
+        <LessonCard
+          key={lesson.id}
+          lesson={lesson}
+          onPress={() => router.push(`/lesson/${lesson.id}`)}
+          onStudy={() => router.push(`/lesson/${lesson.id}`)}
+          progress={mappedProgress}
+        />
+      );
+    })}
       
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Study Tips</Text>

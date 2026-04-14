@@ -11,20 +11,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { difficulties } from "../../data/lessons";
+import { difficulties, categories, QuizQuestion } from "../../data/lessons";
 import { useLearning } from "../../hooks/useLearning";
 import { theme } from "../../theme/theme";
+import QuizEditor from "../../components/QuizEditor";
 
 export default function LessonDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { lessons, updateLesson, deleteLesson, markAsStudied, progress } = useLearning();
-  const [showQuizModal, setShowQuizModal] = useState(false);
-  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [quizScore, setQuizScore] = useState(0);
-  const [quizActive, setQuizActive] = useState(false);
-  const [showQuizResults, setShowQuizResults] = useState(false);
+  const [showQuizEditor, setShowQuizEditor] = useState(false);
   
   const lesson = lessons.find(l => l.id === Number(id));
   const lessonProgress = progress.find(p => p.lessonId === Number(id));
@@ -67,9 +63,16 @@ export default function LessonDetailScreen() {
   };
   
   const handleAddQuizQuestions = () => {
-    // This would open a modal to add quiz questions
-    Alert.alert("Coming Soon", "Quiz question editor will be available in the next update");
+    setShowQuizEditor(true);
   };
+
+  const handleSaveQuizQuestions = async (questions: QuizQuestion[]) => {
+    const updatedLesson = {
+      ...lesson,
+      quizQuestions: questions,
+    };
+    await updateLesson(lesson.id, updatedLesson);
+  };  
   
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Never";
@@ -78,90 +81,103 @@ export default function LessonDetailScreen() {
   };
   
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={[styles.header, { borderLeftColor: categoryColor }]}>
-        <View style={styles.headerTop}>
-          <View style={styles.badges}>
-            <View style={[styles.categoryBadge, { backgroundColor: categoryColor + "10" }]}>
-              <Text style={[styles.categoryText, { color: categoryColor }]}>
-                {lesson.category}
-              </Text>
-            </View>
-            <View style={[styles.difficultyBadge, { backgroundColor: difficulty?.color + "10" }]}>
-              <Text style={[styles.difficultyText, { color: difficulty?.color }]}>
-                {difficulty?.label}
-              </Text>
-            </View>
-            {lesson.isCompleted && (
-              <View style={styles.completedBadge}>
-                <CheckCircle size={14} color={theme.colors.feedback.success} />
-                <Text style={styles.completedText}>Completed</Text>
+    <>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <View style={[styles.header, { borderLeftColor: categoryColor }]}>
+          <View style={styles.headerTop}>
+            <View style={styles.badges}>
+              <View style={[styles.categoryBadge, { backgroundColor: categoryColor + "10" }]}>
+                <Text style={[styles.categoryText, { color: categoryColor }]}>
+                  {lesson.category}
+                </Text>
               </View>
-            )}
-          </View>
-          <View style={styles.actions}>
-            <TouchableOpacity onPress={handleAddQuizQuestions} style={styles.actionButton}>
-              <Flag size={18} color={theme.colors.neutrals.gray500} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleDelete} style={styles.actionButton}>
-              <Trash2 size={18} color={theme.colors.feedback.error} />
-            </TouchableOpacity>
-          </View>
-        </View>
-        
-        <Text style={styles.title}>{lesson.title}</Text>
-        
-        <View style={styles.stats}>
-          <View style={styles.stat}>
-            <BookOpen size={14} color={theme.colors.neutrals.gray500} />
-            <Text style={styles.statText}>Studied {lesson.studyCount}x</Text>
-          </View>
-          <View style={styles.stat}>
-            <Clock size={14} color={theme.colors.neutrals.gray500} />
-            <Text style={styles.statText}>Last studied: {formatDate(lesson.lastStudied)}</Text>
-          </View>
-        </View>
-        
-        {lessonProgress && (
-          <View style={styles.masteryContainer}>
-            <Text style={styles.masteryLabel}>Mastery Level</Text>
-            <View style={styles.masteryBar}>
-              <View style={[styles.masteryFill, { width: `${lessonProgress.masteryLevel}%` }]} />
+              <View style={[styles.difficultyBadge, { backgroundColor: difficulty?.color + "10" }]}>
+                <Text style={[styles.difficultyText, { color: difficulty?.color }]}>
+                  {difficulty?.label}
+                </Text>
+              </View>
+              {lesson.isCompleted && (
+                <View style={styles.completedBadge}>
+                  <CheckCircle size={14} color={theme.colors.feedback.success} />
+                  <Text style={styles.completedText}>Completed</Text>
+                </View>
+              )}
             </View>
-            <Text style={styles.masteryValue}>{lessonProgress.masteryLevel}%</Text>
+            <View style={styles.actions}>
+              <TouchableOpacity onPress={handleAddQuizQuestions} style={styles.actionButton}>
+                <Flag size={18} color={theme.colors.neutrals.gray500} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleDelete} style={styles.actionButton}>
+                <Trash2 size={18} color={theme.colors.feedback.error} />
+              </TouchableOpacity>
+            </View>
+          </View>
+          
+          <Text style={styles.title}>{lesson.title}</Text>
+          
+          <View style={styles.stats}>
+            <View style={styles.stat}>
+              <BookOpen size={14} color={theme.colors.neutrals.gray500} />
+              <Text style={styles.statText}>Studied {lesson.studyCount}x</Text>
+            </View>
+            <View style={styles.stat}>
+              <Clock size={14} color={theme.colors.neutrals.gray500} />
+              <Text style={styles.statText}>Last studied: {formatDate(lesson.lastStudied)}</Text>
+            </View>
+          </View>
+          
+          {lessonProgress && (
+            <View style={styles.masteryContainer}>
+              <Text style={styles.masteryLabel}>Mastery Level</Text>
+              <View style={styles.masteryBar}>
+                <View style={[styles.masteryFill, { width: `${lessonProgress.masteryLevel}%` }]} />
+              </View>
+              <Text style={styles.masteryValue}>{lessonProgress.masteryLevel}%</Text>
+            </View>
+          )}
+        </View>
+        
+        <View style={styles.contentCard}>
+          <Text style={styles.contentTitle}>Lesson Content</Text>
+          <Text style={styles.contentText}>{lesson.content}</Text>
+        </View>
+        
+        {lesson.summary && (
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryTitle}>📝 Summary</Text>
+            <Text style={styles.summaryText}>{lesson.summary}</Text>
           </View>
         )}
-      </View>
-      
-      <View style={styles.contentCard}>
-        <Text style={styles.contentTitle}>Lesson Content</Text>
-        <Text style={styles.contentText}>{lesson.content}</Text>
-      </View>
-      
-      {lesson.summary && (
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>📝 Summary</Text>
-          <Text style={styles.summaryText}>{lesson.summary}</Text>
-        </View>
-      )}
-      
-      {lesson.tags.length > 0 && (
-        <View style={styles.tagsCard}>
-          <Text style={styles.tagsTitle}>🏷️ Tags</Text>
-          <View style={styles.tagsContainer}>
-            {lesson.tags.map((tag) => (
-              <View key={tag} style={styles.tag}>
-                <Text style={styles.tagText}>#{tag}</Text>
-              </View>
-            ))}
+        
+        {lesson.tags.length > 0 && (
+          <View style={styles.tagsCard}>
+            <Text style={styles.tagsTitle}>🏷️ Tags</Text>
+            <View style={styles.tagsContainer}>
+              {lesson.tags.map((tag) => (
+                <View key={tag} style={styles.tag}>
+                  <Text style={styles.tagText}>#{tag}</Text>
+                </View>
+              ))}
+            </View>
           </View>
-        </View>
-      )}
-      
-      <TouchableOpacity style={styles.studyButton} onPress={handleStudy}>
-        <Text style={styles.studyButtonText}>Mark as Studied</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        )}
+        
+        <TouchableOpacity style={[styles.studyButton, {backgroundColor: theme.colors.feedback.success}]} onPress={handleAddQuizQuestions}>
+          <Text style={styles.studyButtonText}>Add Quiz Questions</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.studyButton} onPress={handleStudy}>
+          <Text style={styles.studyButtonText}>Mark as Studied</Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      <QuizEditor
+        visible={showQuizEditor}
+        onClose={() => setShowQuizEditor(false)}
+        onSave={handleSaveQuizQuestions}
+        initialQuestions={lesson.quizQuestions || []}
+        lessonTitle={lesson.title}
+      />
+    </>
   );
 }
 
@@ -357,5 +373,3 @@ const styles = StyleSheet.create({
     color: theme.colors.neutrals.white,
   },
 });
-
-import { categories } from "../../data/lessons";

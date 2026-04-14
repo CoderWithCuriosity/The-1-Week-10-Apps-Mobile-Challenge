@@ -49,8 +49,9 @@
     "extra": {
       "router": {},
       "eas": {
-        
+        "projectId": "f38328e9-3ff8-4195-9539-6a2e0ed33fae"
       }
-    }
+    },
+    "owner": "ochex247"
   }
 }

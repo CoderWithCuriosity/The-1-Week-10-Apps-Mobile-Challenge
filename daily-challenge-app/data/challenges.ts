@@ -9,6 +9,7 @@ export interface Challenge {
   tips?: string[];
   isDaily?: boolean;
   createdAt: string;
+  completedToday?: boolean;
 }
 
 export interface CompletedChallenge {

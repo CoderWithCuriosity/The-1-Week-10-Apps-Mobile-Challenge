@@ -84,6 +84,8 @@ export default function CategoryFilter({
 const styles = StyleSheet.create({
   container: {
     marginBottom: theme.spacing.scales.md,
+    flexGrow: 0,
+    paddingTop: theme.spacing.scales.sm,
   },
   contentContainer: {
     paddingHorizontal: theme.spacing.scales.md,

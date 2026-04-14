@@ -7,14 +7,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Lesson, difficulties } from "../data/lessons";
+import { Lesson, difficulties, categories } from "../data/lessons";
 import { theme } from "../theme/theme";
 
 interface LessonCardProps {
   lesson: Lesson;
   onPress: () => void;
   onStudy?: () => void;
-  progress?: { studyCount: number; masteryLevel: number };
+  progress?: { studyCount?: number; masteryLevel: number };
 }
 
 export default function LessonCard({ lesson, onPress, onStudy, progress }: LessonCardProps) {
@@ -170,5 +170,3 @@ const styles = StyleSheet.create({
     color: theme.colors.neutrals.white,
   },
 });
-
-import { categories } from "../data/lessons";

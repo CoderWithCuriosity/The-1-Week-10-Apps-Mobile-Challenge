@@ -21,7 +21,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.ochex.ochex_focus_timer",
-      "versionCode": 3
+      "versionCode": 1
     },
     "web": {
       "output": "static",
@@ -49,8 +49,9 @@
     "extra": {
       "router": {},
       "eas": {
-        
+        "projectId": "88d446e8-6d06-4fc5-8c1f-15ca877644d0"
       }
-    }
+    },
+    "owner": "ochex247"
   }
 }

@@ -14,7 +14,7 @@ export interface Lesson {
 }
 
 export interface QuizQuestion {
-  id: number;
+  id?: number;
   question: string;
   options: string[];
   correctAnswer: number;
@@ -26,6 +26,7 @@ export interface StudyProgress {
   lastStudied: string;
   studyTime: number; // minutes
   masteryLevel: number; // 0-100
+  studyCount?: number;
 }
 
 export const categories = [
@@ -44,6 +45,14 @@ export const difficulties = [
   { id: "intermediate", label: "Intermediate", color: "#F59E0B" },
   { id: "advanced", label: "Advanced", color: "#EF4444" },
 ];
+
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctAnswer: number; // index of correct option (0-3)
+  explanation?: string;
+}
+
 
 // Empty array - users add their own lessons
 export const lessonsData: Lesson[] = [];

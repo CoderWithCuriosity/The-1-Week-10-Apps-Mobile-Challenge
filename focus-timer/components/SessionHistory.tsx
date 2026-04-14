@@ -55,7 +55,9 @@ export default function SessionHistory({ sessions }: SessionHistoryProps) {
         <View key={session.id} style={styles.sessionItem}>
           <Text style={styles.sessionIcon}>{getTypeIcon(session.type)}</Text>
           <View style={styles.sessionInfo}>
-            <Text style={styles.sessionName}>{session.presetName}</Text>
+            <Text style={styles.sessionName}>
+              {session.presetName || "Deleted Preset"}
+            </Text>
             <Text style={styles.sessionTime}>{formatDate(session.completedAt)}</Text>
           </View>
           <Text style={styles.sessionDuration}>{session.duration} min</Text>

@@ -9,10 +9,10 @@ interface QuotesContextType {
   favorites: number[];
   loading: boolean;
   toggleFavorite: (quoteId: number) => Promise<void>;
-  getRandomQuote: (category?: string) => Quote;
+  getRandomQuote: (category?: string) => Quote | null;
   getQuotesByCategory: (category: string) => Quote[];
   getFavoriteQuotes: () => Quote[];
-  getDailyQuote: () => Quote;
+  getDailyQuote: () => Quote | null;
 }
 
 const QuotesContext = createContext<QuotesContextType | undefined>(undefined);
@@ -69,25 +69,33 @@ export function QuotesProvider({ children }: { children: React.ReactNode }) {
   }, [favorites]);
 
   const getRandomQuote = useCallback((category?: string) => {
+    if (quotes.length === 0) return null;
+    
     let availableQuotes = quotes;
     if (category && category !== "all") {
       availableQuotes = quotes.filter(q => q.category === category);
     }
+    
+    if (availableQuotes.length === 0) return null;
     
     const randomIndex = Math.floor(Math.random() * availableQuotes.length);
     return availableQuotes[randomIndex];
   }, [quotes]);
 
   const getQuotesByCategory = useCallback((category: string) => {
+    if (quotes.length === 0) return [];
     if (category === "all") return quotes;
     return quotes.filter(quote => quote.category === category);
   }, [quotes]);
 
   const getFavoriteQuotes = useCallback(() => {
+    if (quotes.length === 0) return [];
     return quotes.filter(quote => favorites.includes(quote.id));
   }, [quotes, favorites]);
 
   const getDailyQuote = useCallback(() => {
+    if (quotes.length === 0) return null;
+    
     // Use date-based seed for consistent daily quote
     const today = new Date().toISOString().split('T')[0];
     const seed = today.split('-').join('');

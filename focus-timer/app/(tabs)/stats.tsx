@@ -44,7 +44,7 @@ export default function StatsScreen() {
         
         {stats.bestDay && (
           <View style={styles.statCard}>
-            <Calendar size={28} color={theme.colors.info} />
+            <Calendar size={28} color={theme.colors.feedback.info} />
             <Text style={styles.statValue}>{stats.bestDay}</Text>
             <Text style={styles.statLabel}>Best Day</Text>
           </View>

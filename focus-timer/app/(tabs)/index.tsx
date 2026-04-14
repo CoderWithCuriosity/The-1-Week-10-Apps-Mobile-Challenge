@@ -1,7 +1,8 @@
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { Pause, Play, RotateCcw, SkipForward } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,49 +15,90 @@ import { theme } from "../../theme/theme";
 
 export default function TimerScreen() {
   const router = useRouter();
-  const { presets, addSession } = useTimer();
-  const [selectedPreset, setSelectedPreset] = useState(presets[0]);
-  const [timeRemaining, setTimeRemaining] = useState(selectedPreset?.workDuration * 60 || 0);
+  const { presets, addSession, loading, selectedPresetId, setSelectedPresetId } = useTimer();
+  const [timeRemaining, setTimeRemaining] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [currentPhase, setCurrentPhase] = useState<"work" | "break" | "longBreak">("work");
   const [sessionCount, setSessionCount] = useState(0);
-  const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
+  const [intervalId, setIntervalId] = useState<number | null>(null);
 
+  // Get the selected preset object
+  const selectedPreset = presets.find(p => p.id === selectedPresetId) || presets[0];
+
+  // Reset timer when returning to screen or when preset changes
+  useFocusEffect(
+    useCallback(() => {
+      // Reset timer state when returning to screen
+      if (intervalId) {
+        clearInterval(intervalId);
+        setIntervalId(null);
+      }
+      setIsActive(false);
+      setSessionCount(0);
+      setCurrentPhase("work");
+      
+      return () => {
+        if (intervalId) {
+          clearInterval(intervalId);
+          setIntervalId(null);
+        }
+      };
+    }, [selectedPresetId])
+  );
+
+  // Update time remaining when preset or phase changes
   useEffect(() => {
     if (selectedPreset) {
-      const totalSeconds = 
-        currentPhase === "work" 
-          ? selectedPreset.workDuration * 60
-          : currentPhase === "break"
-          ? selectedPreset.breakDuration * 60
-          : (selectedPreset.longBreakDuration || 15) * 60;
+      let totalSeconds = 0;
+      if (currentPhase === "work") {
+        totalSeconds = selectedPreset.workDuration * 60;
+      } else if (currentPhase === "break") {
+        totalSeconds = selectedPreset.breakDuration * 60;
+      } else {
+        totalSeconds = (selectedPreset.longBreakDuration || 15) * 60;
+      }
       setTimeRemaining(totalSeconds);
     }
-  }, [selectedPreset, currentPhase]);
+  }, [selectedPreset, currentPhase, selectedPresetId]);
 
+  // Timer logic
   useEffect(() => {
     if (isActive && timeRemaining > 0) {
       const id = setInterval(() => {
         setTimeRemaining(prev => prev - 1);
       }, 1000);
       setIntervalId(id);
-      return () => clearInterval(id);
-    } else if (timeRemaining === 0 && isActive) {
+      return () => {
+        if (id) clearInterval(id);
+      };
+    } else if (timeRemaining === 0 && isActive && selectedPreset) {
       handleComplete();
     }
-  }, [isActive, timeRemaining]);
+  }, [isActive, timeRemaining, selectedPreset]);
 
   const handleComplete = async () => {
-    if (intervalId) clearInterval(intervalId);
+    if (intervalId) {
+      clearInterval(intervalId);
+      setIntervalId(null);
+    }
     setIsActive(false);
     
+    if (!selectedPreset) return;
+    
     // Record session
+    let duration = 0;
+    if (currentPhase === "work") {
+      duration = selectedPreset.workDuration;
+    } else if (currentPhase === "break") {
+      duration = selectedPreset.breakDuration;
+    } else {
+      duration = selectedPreset.longBreakDuration || 15;
+    }
+    
     await addSession({
       presetId: selectedPreset.id,
       presetName: selectedPreset.name,
-      duration: currentPhase === "work" ? selectedPreset.workDuration : 
-                currentPhase === "break" ? selectedPreset.breakDuration : 
-                (selectedPreset.longBreakDuration || 15),
+      duration: duration,
       type: currentPhase,
     });
     
@@ -80,29 +122,51 @@ export default function TimerScreen() {
   const handleStart = () => setIsActive(true);
   const handlePause = () => setIsActive(false);
   const handleReset = () => {
-    if (intervalId) clearInterval(intervalId);
+    if (intervalId) {
+      clearInterval(intervalId);
+      setIntervalId(null);
+    }
     setIsActive(false);
-    const totalSeconds = 
-      currentPhase === "work" 
-        ? selectedPreset.workDuration * 60
-        : currentPhase === "break"
-        ? selectedPreset.breakDuration * 60
-        : (selectedPreset.longBreakDuration || 15) * 60;
-    setTimeRemaining(totalSeconds);
+    if (selectedPreset) {
+      let totalSeconds = 0;
+      if (currentPhase === "work") {
+        totalSeconds = selectedPreset.workDuration * 60;
+      } else if (currentPhase === "break") {
+        totalSeconds = selectedPreset.breakDuration * 60;
+      } else {
+        totalSeconds = (selectedPreset.longBreakDuration || 15) * 60;
+      }
+      setTimeRemaining(totalSeconds);
+    }
   };
+  
   const handleSkip = () => {
-    if (intervalId) clearInterval(intervalId);
+    if (intervalId) {
+      clearInterval(intervalId);
+      setIntervalId(null);
+    }
     setIsActive(false);
     handleComplete();
   };
 
-  const progress = 1 - (timeRemaining / (
-    currentPhase === "work" 
-      ? selectedPreset.workDuration * 60
-      : currentPhase === "break"
-      ? selectedPreset.breakDuration * 60
-      : (selectedPreset.longBreakDuration || 15) * 60
-  ));
+  const handleSelectPreset = () => {
+    // Navigate to presets screen in selection mode
+    router.push("/presets?select=true");
+  };
+
+  // Calculate progress (avoid division by zero)
+  let progress = 0;
+  if (selectedPreset) {
+    let totalTime = 0;
+    if (currentPhase === "work") {
+      totalTime = selectedPreset.workDuration * 60;
+    } else if (currentPhase === "break") {
+      totalTime = selectedPreset.breakDuration * 60;
+    } else {
+      totalTime = (selectedPreset.longBreakDuration || 15) * 60;
+    }
+    progress = 1 - (timeRemaining / totalTime);
+  }
 
   const getPhaseText = () => {
     switch (currentPhase) {
@@ -117,12 +181,23 @@ export default function TimerScreen() {
     switch (currentPhase) {
       case "work": return theme.colors.brand.primary;
       case "break": return theme.colors.feedback.success;
-      case "longBreak": return theme.colors.info;
+      case "longBreak": return theme.colors.feedback.info;
       default: return theme.colors.brand.primary;
     }
   };
 
-  if (!selectedPreset) {
+  // Show loading state
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.brand.primary} />
+        <Text style={styles.loadingText}>Loading timer...</Text>
+      </View>
+    );
+  }
+
+  // Show no preset state
+  if (!selectedPreset || presets.length === 0) {
     return (
       <View style={styles.noPresetContainer}>
         <Text style={styles.noPresetText}>No timer presets found</Text>
@@ -142,9 +217,12 @@ export default function TimerScreen() {
         <Text style={styles.presetLabel}>Current Preset</Text>
         <TouchableOpacity 
           style={styles.presetButton}
-          onPress={() => router.push("/presets")}
+          onPress={handleSelectPreset}
         >
           <Text style={styles.presetName}>{selectedPreset.name}</Text>
+          <Text style={styles.presetDuration}>
+            {selectedPreset.workDuration} min work / {selectedPreset.breakDuration} min break
+          </Text>
         </TouchableOpacity>
       </View>
       
@@ -232,6 +310,11 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: theme.colors.neutrals.gray900,
   },
+  presetDuration: {
+    fontSize: 12,
+    color: theme.colors.neutrals.gray500,
+    marginTop: 2,
+  },
   timerContainer: {
     alignItems: "center",
     marginVertical: theme.spacing.scales.xl,
@@ -253,7 +336,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: theme.spacing.scales.md,
-    marginTop: theme.spacing.scales.xl,
   },
   controlButton: {
     width: 72,
@@ -296,11 +378,23 @@ const styles = StyleSheet.create({
     color: theme.colors.neutrals.gray500,
     lineHeight: 18,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: theme.colors.neutrals.gray50,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: theme.colors.neutrals.gray500,
+    marginTop: theme.spacing.scales.md,
+  },
   noPresetContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: theme.spacing.scales.xl,
+    backgroundColor: theme.colors.neutrals.gray50,
   },
   noPresetText: {
     fontSize: 16,
